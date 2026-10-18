@@ -91,6 +91,6 @@ nmap -sV -p 1-1000 scanme.nmap.org
 Cross-checking against `scanme.nmap.org` consistently verifies **22/tcp OpenSSH** and **80/tcp Apache 2.4.7**, matching Nmap’s documented test services.
 
 ---
-**Author:** S. Rath  
+**Author:** Romansh Rathee 
 **License:** MIT  
 *For educational and authorized security auditing only.*
