@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Intel &amp; Architecture // SOC Port Reconnaissance</title>
+  <meta name="description" content="Technical briefing, TCP architecture, and legal authorization standards for the SOC Port Scanner." />
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet" />
+  
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body class="soc-theme">
+  <canvas id="bg-canvas" aria-hidden="true"></canvas>
+  <div class="scanline-overlay" aria-hidden="true"></div>
+
+  <div class="app-container">
+    <!-- Top HUD Status Bar -->
+    <header class="hud-topbar">
+      <div class="hud-brand">
+        <a href="/" class="brand-link">
+          <span class="brand-bracket">[</span>
+          <span class="brand-tag">SYS://RECON</span>
+          <span class="brand-bracket">]</span>
+          <span class="brand-title">PORT SCANNER</span>
+        </a>
+        <div class="engine-badge">
+          <span class="pulse-dot"></span>
+          <span>INTEL BRIEFING</span>
+        </div>
+      </div>
+
+      <nav class="hud-nav">
+        <a href="/" class="nav-btn"><span class="nav-prefix">//</span> CONSOLE</a>
+        <a href="/about" class="nav-btn active" aria-current="page"><span class="nav-prefix">//</span> INTEL &amp; DOCS</a>
+      </nav>
+    </header>
+
+    <!-- Main Content Container for About Page -->
+    <main class="about-container">
+      <div class="about-hero">
+        <div class="kicker-tag">// ARCHITECTURE &amp; OPERATIONAL BRIEFING</div>
+        <h1 class="about-title">INSIDE THE RECONNAISSANCE ENGINE</h1>
+        <p class="about-subtitle">
+          From socket primitives to concurrent thread execution: how this instrument discovers open TCP services, extracts software fingerprints, and bridges high-speed GUI workflows with Nmap CLI mastery.
+        </p>
+      </div>
+
+      <div class="intel-grid">
+        <!-- Section 1: What this tool does -->
+        <article class="intel-card">
+          <div class="intel-header">
+            <span class="intel-num">01</span>
+            <h2>WHAT THIS TOOL DOES</h2>
+          </div>
+          <div class="intel-body">
+            <p>
+              This scanner is a high-performance multithreaded network reconnaissance instrument engineered for security operators, penetration testers, and network engineers.
+            </p>
+            <p>
+              Given any target hostname or IPv4 address, the engine systematically assesses designated TCP port ranges to verify active listening services, extracts raw banner greetings and HTTP headers to fingerprint running software versions (e.g. OpenSSH, Apache, Nginx), and generates formal pentest reports in PDF, CSV, and JSON formats.
+            </p>
+            <div class="intel-highlight">
+              <span class="highlight-label">MISSION:</span>
+              <span>Provide instant graphical visibility without sacrificing the raw diagnostic power and learning curve of terminal-based reconnaissance tools.</span>
+            </div>
+          </div>
+        </article>
+
+        <!-- Section 2: How it works · The 65,535 Doors Analogy -->
+        <article class="intel-card">
+          <div class="intel-header">
+            <span class="intel-num">02</span>
+            <h2>HOW IT WORKS · THE 65,535 DOORS ANALOGY</h2>
+          </div>
+          <div class="intel-body">
+            <p>
+              Think of a networked server as a vast fortress containing exactly <strong>65,535 TCP doors</strong>. Behind closed doors, nothing responds. Behind open doors, specific daemon processes (SSH, web servers, databases) stand ready to communicate.
+            </p>
+            <p>
+              A port scanner is an operator walking down the corridors testing the door knobs. In technical terms, it requests the operating system kernel to perform a standard <strong>TCP 3-way handshake (SYN &rarr; SYN-ACK &rarr; ACK)</strong> via the non-blocking <code>connect_ex()</code> socket system call.
+            </p>
+            <ul>
+              <li><strong>Return Code 0 (Door Opens):</strong> A service is listening and the TCP connection succeeds.</li>
+              <li><strong>Connection Refused (Locked Door):</strong> The target host actively returns an <code>RST</code> packet indicating no listener.</li>
+              <li><strong>Timeout (Filtered / Firewall):</strong> An intermediate firewall or packet filter drops the probe silently.</li>
+            </ul>
+            <p>
+              Once a door opens, our scanner immediately probes the connection: it reads the server's initial greeting banner or dispatches a lightweight <code>HEAD / HTTP/1.0</code> probe to discover the exact software name and version.
+            </p>
+          </div>
+        </article>
+
+        <!-- Section 3: Features & Architecture -->
+        <article class="intel-card">
+          <div class="intel-header">
+            <span class="intel-num">03</span>
+            <h2>FEATURES &amp; NMAP COMPATIBILITY</h2>
+          </div>
+          <div class="intel-body">
+            <ul class="features-list">
+              <li>
+                <strong>Concurrent Socket Engine:</strong> Scalable concurrency driven by Python's <code>ThreadPoolExecutor</code>, capable of surveying hundreds of ports per second without overwhelming local resources.
+              </li>
+              <li>
+                <strong>Dynamic Banner Fingerprinting:</strong> Captures software release strings, protocols, and OS hints on open ports (the analogue to Nmap's <code>-sV</code> flag).
+              </li>
+              <li>
+                <strong>Unified Core Architecture:</strong> "One brain, two faces" &mdash; the same <code>scan()</code> engine powers both the interactive web dashboard and the headless command-line interface.
+              </li>
+              <li>
+                <strong>Live Nmap Command Generator:</strong> Every click on presets, service chips, or banner options dynamically constructs the exact equivalent <code>nmap</code> command syntax in real time.
+              </li>
+              <li>
+                <strong>Server-Sent Events (SSE) Streaming:</strong> Low-latency push channel delivers live port discoveries and console logs to the browser instantly as sockets complete.
+              </li>
+              <li>
+                <strong>Pentest-Grade PDF Reports:</strong> Generates executive-ready security audit reports with formal monospace tables, metric summaries, and authorized testing disclaimers.
+              </li>
+            </ul>
+
+            <div class="comparison-box">
+              <span class="comp-title">NMAP CLI COMPARISON MATRIX</span>
+              <table class="comp-table">
+                <thead>
+                  <tr>
+                    <th>CAPABILITY</th>
+                    <th>THIS INSTRUMENT</th>
+                    <th>NMAP (STICK SHIFT)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Scan Technique</td>
+                    <td>Full TCP Connect (<code>connect_ex</code>)</td>
+                    <td>Raw SYN Stealth (<code>-sS</code>) or Connect (<code>-sT</code>)</td>
+                  </tr>
+                  <tr>
+                    <td>Concurrency</td>
+                    <td>Thread pool (10&ndash;200 workers)</td>
+                    <td>Parallel probe timing templates (<code>-T1</code> to <code>-T5</code>)</td>
+                  </tr>
+                  <tr>
+                    <td>Fingerprinting</td>
+                    <td>Raw banner &amp; HTTP probe</td>
+                    <td>Comprehensive <code>nmap-service-probes</code> database</td>
+                  </tr>
+                  <tr>
+                    <td>Output Formats</td>
+                    <td>PDF, CSV, JSON, Live SSE</td>
+                    <td>Standard, XML, Grepable (<code>-oN, -oX, -oG</code>)</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </article>
+
+        <!-- Section 4: Safety & Legal Note -->
+        <article class="intel-card legal-card">
+          <div class="intel-header">
+            <span class="intel-num">04</span>
+            <h2>LEGAL NOTE &amp; SAFETY GUARDRAILS</h2>
+          </div>
+          <div class="intel-body">
+            <div class="legal-warning-banner">
+              <span class="warn-icon">⚠️</span>
+              <strong>MANDATORY NOTICE: SCAN ONLY SYSTEMS YOU OWN OR HAVE PERMISSION TO TEST.</strong>
+            </div>
+            <p>
+              Port scanning unauthorized systems may be interpreted as reconnaissance for an intrusion and can violate computer security statutes (such as the Computer Fraud and Abuse Act in the US, the Computer Misuse Act in the UK, and international equivalents).
+            </p>
+            <p>
+              To enforce safe practices, this tool embeds strict guardrails:
+            </p>
+            <ul>
+              <li><strong>Explicit Consent Requirement:</strong> Scans cannot be dispatched without confirming testing authorization.</li>
+              <li><strong>Concurrency Capping:</strong> Worker threads are strictly capped at 200 to prevent denial-of-service on scanned hosts or exhaustion of local socket descriptors.</li>
+              <li><strong>Public Scope Limitations:</strong> Full 1&ndash;65535 surveys are restricted to loopback (<code>127.0.0.1</code>), RFC1918 private subnets, or Nmap's officially authorized public testing host (<code>scanme.nmap.org</code>).</li>
+            </ul>
+          </div>
+        </article>
+      </div>
+
+      <!-- Author and Tech Stack Colophon -->
+      <section class="colophon-card">
+        <div class="colophon-row">
+          <div class="colophon-col">
+            <span class="colo-label">ENGINEERING &amp; DESIGN</span>
+            <span class="colo-val">S. Rath</span>
+          </div>
+          <div class="colophon-col">
+            <span class="colo-label">BACKEND ARCHITECTURE</span>
+            <span class="colo-val">Python 3 · Flask 3 · Sockets · ThreadPoolExecutor · ReportLab 5</span>
+          </div>
+          <div class="colophon-col">
+            <span class="colo-label">FRONTEND TELEMETRY</span>
+            <span class="colo-val">Vanilla ES6+ · Server-Sent Events · Responsive CSS3 Grid · Canvas 2D</span>
+          </div>
+          <div class="colophon-col">
+            <span class="colo-label">TYPOGRAPHY</span>
+            <span class="colo-val">JetBrains Mono &amp; Rajdhani (Google Fonts)</span>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Bottom SOC Footer -->
+    <footer class="hud-footer">
+      <div class="footer-left">
+        <span class="legal-badge">AUTHORIZED USE ONLY</span>
+        <span class="footer-notice">Scan only systems you own or have verified permission to test.</span>
+      </div>
+      <div class="footer-right">
+        <a href="/" class="return-link">&larr; RETURN TO SCANNER CONSOLE</a>
+      </div>
+    </footer>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

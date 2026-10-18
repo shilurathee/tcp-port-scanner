@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SOC Console // TCP Port Reconnaissance</title>
+  <meta name="description" content="Security Operations Center TCP port scanner and service fingerprinting dashboard." />
+  
+  <!-- Google Fonts: JetBrains Mono (technical) & Rajdhani (headings) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet" />
+  
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body class="soc-theme">
+  <!-- Interactive background canvas for subtle network-node animation -->
+  <canvas id="bg-canvas" aria-hidden="true"></canvas>
+  <div class="scanline-overlay" aria-hidden="true"></div>
+
+  <div class="app-container">
+    <!-- Top HUD Status Bar -->
+    <header class="hud-topbar">
+      <div class="hud-brand">
+        <a href="/" class="brand-link">
+          <span class="brand-bracket">[</span>
+          <span class="brand-tag">SYS://RECON</span>
+          <span class="brand-bracket">]</span>
+          <span class="brand-title">PORT SCANNER</span>
+        </a>
+        <div class="engine-badge">
+          <span class="pulse-dot" id="engine-dot"></span>
+          <span id="engine-status">ENGINE ONLINE</span>
+        </div>
+      </div>
+
+      <div class="hud-telemetry">
+        <div class="tele-item">
+          <span class="tele-label">TARGET</span>
+          <span class="tele-val" id="hud-target">—</span>
+        </div>
+        <div class="tele-item">
+          <span class="tele-label">PROFILE</span>
+          <span class="tele-val" id="hud-profile">STANDARD</span>
+        </div>
+        <div class="tele-item">
+          <span class="tele-label">WORKERS</span>
+          <span class="tele-val" id="hud-threads">100</span>
+        </div>
+        <div class="tele-item">
+          <span class="tele-label">ELAPSED</span>
+          <span class="tele-val" id="hud-elapsed">00:00.0</span>
+        </div>
+        <div class="tele-item">
+          <span class="tele-label">RATE</span>
+          <span class="tele-val" id="hud-rate">0 P/S</span>
+        </div>
+      </div>
+
+      <nav class="hud-nav">
+        <a href="/" class="nav-btn active" aria-current="page"><span class="nav-prefix">//</span> CONSOLE</a>
+        <a href="/about" class="nav-btn"><span class="nav-prefix">//</span> INTEL &amp; DOCS</a>
+      </nav>
+    </header>
+
+    <!-- Main 3-Zone Workspace -->
+    <main class="console-grid">
+      <!-- Zone 1: Recon & Scan Configuration Panel -->
+      <section class="panel panel-config">
+        <div class="panel-header">
+          <div class="header-title">
+            <span class="bracket-accent">+</span>
+            <h2>01 // TARGET &amp; RECON CONFIG</h2>
+          </div>
+          <span class="panel-id">SEC-CFG</span>
+        </div>
+
+        <form id="scan-form" novalidate>
+          <!-- Target input -->
+          <div class="form-group">
+            <div class="label-row">
+              <label for="target-input">TARGET HOST OR IPV4</label>
+              <span class="input-hint">RFC1123 / IPV4</span>
+            </div>
+            <div class="input-wrap">
+              <span class="input-prefix">&gt;</span>
+              <input
+                id="target-input"
+                name="target"
+                type="text"
+                placeholder="scanme.nmap.org"
+                value="scanme.nmap.org"
+                required
+                autocomplete="off"
+                spellcheck="false"
+              />
+            </div>
+            <div class="quick-targets" aria-label="Quick target selection">
+              <span class="quick-label">QUICK:</span>
+              <button type="button" class="btn-chip-target" data-target="scanme.nmap.org">scanme.nmap.org</button>
+              <button type="button" class="btn-chip-target" data-target="127.0.0.1">127.0.0.1</button>
+              <button type="button" class="btn-chip-target" data-target="localhost">localhost</button>
+            </div>
+          </div>
+
+          <!-- Scan Profiles -->
+          <div class="form-group">
+            <div class="label-row">
+              <label>SCAN PROFILE</label>
+              <span class="input-hint">PORT SCOPE</span>
+            </div>
+            <div class="profile-grid" role="radiogroup" aria-label="Scan Profile">
+              <label class="profile-card">
+                <input type="radio" name="preset" value="quick" />
+                <span class="card-inner">
+                  <span class="profile-name">QUICK</span>
+                  <span class="profile-scope">Top 100 ports</span>
+                </span>
+              </label>
+              <label class="profile-card">
+                <input type="radio" name="preset" value="standard" checked />
+                <span class="card-inner">
+                  <span class="profile-name">STANDARD</span>
+                  <span class="profile-scope">Ports 1–1024</span>
+                </span>
+              </label>
+              <label class="profile-card">
+                <input type="radio" name="preset" value="full" />
+                <span class="card-inner">
+                  <span class="profile-name">FULL</span>
+                  <span class="profile-scope">1–65535 (Safe/Local)</span>
+                </span>
+              </label>
+              <label class="profile-card">
+                <input type="radio" name="preset" value="custom" />
+                <span class="card-inner">
+                  <span class="profile-name">CUSTOM</span>
+                  <span class="profile-scope">Manual specification</span>
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Custom Port Range (hidden unless custom selected) -->
+          <div class="form-group" id="custom-ports-wrap" hidden>
+            <div class="label-row">
+              <label for="custom-ports">CUSTOM PORT SPECIFICATION</label>
+              <span class="input-hint">e.g. 22,80,443 or 8000-8100</span>
+            </div>
+            <div class="input-wrap">
+              <span class="input-prefix">#</span>
+              <input
+                id="custom-ports"
+                name="ports"
+                type="text"
+                placeholder="21-25, 80, 443, 8080"
+                autocomplete="off"
+                spellcheck="false"
+              />
+            </div>
+          </div>
+
+          <!-- Service Preset Chips -->
+          <div class="form-group">
+            <div class="label-row">
+              <label>SERVICE TOGGLES</label>
+              <span class="input-hint">AUTO-APPEND PORTS</span>
+            </div>
+            <div class="service-chips-grid">
+              <button type="button" class="service-chip" data-service="web">
+                <span class="chip-code">WEB</span>
+                <span class="chip-ports">80, 443, 8080</span>
+              </button>
+              <button type="button" class="service-chip" data-service="remote">
+                <span class="chip-code">SSH / RDP</span>
+                <span class="chip-ports">22, 3389</span>
+              </button>
+              <button type="button" class="service-chip" data-service="database">
+                <span class="chip-code">DATABASE</span>
+                <span class="chip-ports">3306, 5432, 27017</span>
+              </button>
+              <button type="button" class="service-chip" data-service="mail">
+                <span class="chip-code">MAIL</span>
+                <span class="chip-ports">25, 110, 143</span>
+              </button>
+              <button type="button" class="service-chip" data-service="file">
+                <span class="chip-code">FTP / SMB</span>
+                <span class="chip-ports">21, 445</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Banner Grabbing & Service Detection Toggle -->
+          <div class="form-group toggle-row">
+            <div class="toggle-text">
+              <span class="toggle-title">SERVICE DETECTION (-sV)</span>
+              <span class="toggle-desc">Probe listening ports to extract software banner fingerprints</span>
+            </div>
+            <label class="switch-wrap">
+              <input type="checkbox" id="identify-toggle" checked />
+              <span class="slider-switch"></span>
+            </label>
+          </div>
+
+          <!-- Speed Slider -->
+          <div class="form-group">
+            <div class="label-row">
+              <label for="speed-slider">SCAN VELOCITY / CONCURRENCY</label>
+              <span class="speed-badge" id="speed-indicator">NORMAL [100 WORKERS]</span>
+            </div>
+            <div class="range-wrap">
+              <input
+                id="speed-slider"
+                type="range"
+                min="10"
+                max="200"
+                step="10"
+                value="100"
+              />
+              <div class="range-marks">
+                <span class="mark-label" data-val="20">STEALTH (20)</span>
+                <span class="mark-label active" data-val="100">NORMAL (100)</span>
+                <span class="mark-label" data-val="200">AGGRESSIVE (200)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Live Nmap Translation Preview -->
+          <div class="form-group nmap-box">
+            <div class="nmap-header">
+              <span class="nmap-label">LIVE NMAP COMMAND TRANSLATION</span>
+              <button type="button" class="btn-copy-cmd" id="btn-copy-cmd" title="Copy Nmap command to clipboard">
+                <span class="copy-text">COPY</span>
+              </button>
+            </div>
+            <div class="nmap-terminal">
+              <span class="nmap-prompt">$</span>
+              <code id="nmap-command-line">nmap -sV -p 1-1024 scanme.nmap.org</code>
+            </div>
+            <div class="nmap-edu">
+              <span>Flags: <span class="tag-flag">-sV</span> Banner grab | <span class="tag-flag">-p</span> Port specification</span>
+            </div>
+          </div>
+
+          <!-- Consent Checkbox -->
+          <div class="form-group consent-group">
+            <label class="checkbox-container">
+              <input type="checkbox" id="consent-check" required />
+              <span class="checkmark"></span>
+              <span class="consent-label">I am authorized to scan this target under valid security testing scope.</span>
+            </label>
+          </div>
+
+          <!-- Error Alert Banner -->
+          <div class="alert-error" id="form-error-banner" hidden>
+            <span class="error-icon">[!]</span>
+            <span id="form-error-msg"></span>
+          </div>
+
+          <!-- Action CTA Button -->
+          <button type="submit" class="btn-initiate" id="btn-initiate">
+            <span class="btn-inner">
+              <span class="btn-bracket">[</span>
+              <span class="btn-icon">⚡</span>
+              <span class="btn-text">INITIATE SCAN</span>
+              <span class="btn-bracket">]</span>
+            </span>
+          </button>
+        </form>
+      </section>
+
+      <!-- Zone 2: Live Results Display -->
+      <section class="panel panel-results">
+        <div class="panel-header">
+          <div class="header-title">
+            <span class="bracket-accent">+</span>
+            <h2>02 // TELEMETRY &amp; OPEN PORTS</h2>
+          </div>
+          <div class="summary-pill" id="summary-pill">
+            <span class="pill-dot">●</span>
+            <span id="summary-pill-text">0 OPEN / 0 SCANNED / 0.0s</span>
+          </div>
+        </div>
+
+        <!-- Real-time Progress Bar & Rates -->
+        <div class="progress-section">
+          <div class="progress-metrics">
+            <span class="metric-pct" id="progress-percent">0%</span>
+            <span class="metric-ratio" id="progress-ratio">0 / 1024 PORTS</span>
+            <span class="metric-speed" id="progress-speed">0.0 PORTS/S</span>
+          </div>
+          <div class="meter-track" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+            <div class="meter-fill" id="meter-fill"></div>
+          </div>
+        </div>
+
+        <!-- Table Filters & Results Count -->
+        <div class="table-toolbar">
+          <div class="filter-group">
+            <button type="button" class="btn-filter active" data-filter="open">OPEN ONLY (<span id="count-open">0</span>)</button>
+            <button type="button" class="btn-filter" data-filter="all">ALL FINDINGS (<span id="count-all">0</span>)</button>
+          </div>
+          <div class="reports-toolbar" id="reports-toolbar" hidden>
+            <span class="export-label">REPORTS:</span>
+            <a class="btn-export" id="btn-dl-pdf" href="#" download>
+              <span class="export-ext">PDF</span>
+            </a>
+            <a class="btn-export" id="btn-dl-csv" href="#" download>
+              <span class="export-ext">CSV</span>
+            </a>
+            <a class="btn-export" id="btn-dl-json" href="#" download>
+              <span class="export-ext">JSON</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Findings Table -->
+        <div class="table-container">
+          <table class="results-table" id="results-table">
+            <thead>
+              <tr>
+                <th style="width: 15%">PORT</th>
+                <th style="width: 15%">STATE</th>
+                <th style="width: 22%">SERVICE</th>
+                <th style="width: 48%">SERVICE FINGERPRINT / BANNER</th>
+              </tr>
+            </thead>
+            <tbody id="results-body">
+              <tr class="empty-row" id="empty-state-row">
+                <td colspan="4">
+                  <div class="empty-state">
+                    <span class="empty-code">[ READY // STANDBY ]</span>
+                    <p>No active scan running. Configure target and initiate reconnaissance.</p>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Zone 3: Live Terminal Log Window (Full Width Bottom) -->
+      <section class="panel panel-terminal">
+        <div class="panel-header terminal-header">
+          <div class="header-title">
+            <span class="bracket-accent">+</span>
+            <h2>03 // LIVE SCAN STREAM [STDOUT]</h2>
+          </div>
+          <div class="terminal-actions">
+            <button type="button" class="btn-term" id="btn-autoscroll" data-enabled="true">AUTOSCROLL: ON</button>
+            <button type="button" class="btn-term" id="btn-copy-log">COPY LOG</button>
+            <button type="button" class="btn-term" id="btn-clear-log">CLEAR</button>
+          </div>
+        </div>
+        <div class="terminal-body" id="terminal-body" tabindex="0" role="region" aria-label="Terminal Log Stream">
+          <div class="log-line text-muted">[SYS] SOC reconnaissance engine ready. Sockets online.</div>
+          <div class="log-line text-cyan">[CFG] Prepared for authorized penetration testing. Select target to begin.</div>
+          <div id="live-log-container"></div>
+          <span class="terminal-cursor">_</span>
+        </div>
+      </section>
+    </main>
+
+    <!-- Bottom SOC Footer -->
+    <footer class="hud-footer">
+      <div class="footer-left">
+        <span class="legal-badge">AUTHORIZED USE ONLY</span>
+        <span class="footer-notice">Scan only networks and systems you own or have explicit authorization to test.</span>
+      </div>
+      <div class="footer-right">
+        <span>HOUSE OF PORTS // SOC EDITION · S. RATH</span>
+      </div>
+    </footer>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

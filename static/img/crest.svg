@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="House of Ports crest">
+  <rect x="2" y="2" width="60" height="60" fill="#14213d" stroke="#b08d57" stroke-width="2"/>
+  <rect x="6" y="6" width="52" height="52" fill="none" stroke="#b08d57" stroke-width="0.6"/>
+  <path d="M18 46 V24 l14-10 14 10 v22 H18z" fill="#1f3a2e" stroke="#b08d57" stroke-width="1.4"/>
+  <circle cx="32" cy="34" r="5.5" fill="none" stroke="#f4ecd8" stroke-width="1.4"/>
+  <path d="M32 39.5 v6" stroke="#f4ecd8" stroke-width="1.4" stroke-linecap="round"/>
+  <text x="32" y="56" text-anchor="middle" font-size="6" fill="#b08d57" font-family="Times New Roman, serif" letter-spacing="1.6">HP</text>
+</svg>
